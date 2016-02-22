@@ -19,6 +19,9 @@ module.exports = function(robot) {
 
                 markers.forEach(function(marker) {
                     var text = marker.alerttext.toLowerCase().replace(/ /g, '');
+                    if (text.indexOf('tastykabob') !== -1) {
+                        marker.print_name = marker.print_name.trim() + ' :party-parrot:';
+                    }
                     if (text.indexOf('franklin') !== -1) {
                         franklin[marker.print_name.trim()] = marker;
                     }
