@@ -70,6 +70,10 @@ function getUrl(url, msg) {
 }
 
 module.exports = function(robot) {
+    robot.hear(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z0-9\-])+)\/pulls/gi, function(msg) {
+        msg.send('PEOPLE. There are pull requests to review.');
+    });
+
     robot.hear(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z0-9\-])+)\/pull\/([\d]+)/gi, function(msg) {
         var urls = msg.message.text.match(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z\-])+)\/pull\/([\d]+)/gi);
         _.each(urls, function(url) {
