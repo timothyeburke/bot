@@ -3,6 +3,7 @@
 //
 // Commands:
 //   listens for github.com pull request urls like https://github.com/foo/foo-api/pull/975
+//   listens for github.com issue urls like https://github.com/foo/foo-api/issues/815
 
 'use strict';
 var _ = require('lodash');
@@ -20,19 +21,19 @@ function formatPr(pr, issue, msg) {
             author_name: pr.user.login,
             author_link: pr.user.html_url,
             author_icon: pr.user.avatar_url,
-            mrkdwn_in: ['text']
+            mrkdwn_in: ['text', 'fields']
         }
     };
 
-    // if (issue.labels.length) {
-    //     attachment.content.fields = [{
-    //         title: 'Labels',
-    //         value: issue.labels.map(function(label) {
-    //             return '[' + label.name + ']';
-    //         }).join('\n'),
-    //         short: true
-    //     }]
-    // }
+    if (issue.labels.length) {
+        attachment.content.fields = [{
+            title: 'Labels',
+            value: issue.labels.map(function(label) {
+                return '[' + label.name + ']';
+            }).join('\n'),
+            short: true
+        }]
+    }
 
     var state = pr.state;
     if (pr.state === 'closed') {
@@ -42,6 +43,43 @@ function formatPr(pr, issue, msg) {
         } else {
             attachment.content.color = '#BE2A00';
         }
+    } else {
+        attachment.content.color = '#6AC631';
+    }
+    attachment.content.text = '`[' + _.capitalize(state) + ']` ' + attachment.content.text;
+
+    return attachment;
+}
+
+function formatIssue(issue, msg) {
+    var attachment = {
+        channel: msg.envelope.room,
+        content: {
+            title: issue.title + ' #' + issue.number,
+            title_link: issue.html_url,
+            text: issue.body,
+            color: '#000000',
+            fallback: issue.title + '#' + issue.number,
+            author_name: issue.user.login,
+            author_link: issue.user.html_url,
+            author_icon: issue.user.avatar_url,
+            mrkdwn_in: ['text', 'fields']
+        }
+    };
+
+    if (issue.labels.length) {
+        attachment.content.fields = [{
+            title: 'Labels',
+            value: issue.labels.map(function(label) {
+                return '`[' + label.name + ']`';
+            }).join('\n'),
+            short: true
+        }]
+    }
+
+    var state = issue.state;
+    if (issue.state === 'closed') {
+        attachment.content.color = '#BE2A00';
     } else {
         attachment.content.color = '#6AC631';
     }
@@ -74,6 +112,26 @@ module.exports = function(robot) {
         msg.send('PEOPLE. There are pull requests to review.');
     });
 
+    robot.hear(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z\-])+)\/issues\/([\d]+)/gi, function(msg) {
+        var urls = msg.message.text.match(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z\-])+)\/issues\/([\d]+)/gi);
+
+        _.each(urls, function(url) {
+            var matches = /https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z0-9\-])+)\/issues\/([\d]+)/gi.exec(url);
+            var owner = matches[1];
+            var project = matches[3];
+            var issue = matches[5];
+            var baseUrl = 'https://api.github.com/repos/' + owner + '/';
+
+            var issueUrl = baseUrl + project + '/issues/' + issue;
+
+            getUrl(issueUrl, msg).then(function(issue) {
+                robot.emit('slack.attachment', formatIssue(issue, msg));
+            }).catch(function(error) {
+                msg.send('There was an error fetching the issue.');
+            })
+        })
+    })
+
     robot.hear(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z0-9\-])+)\/pull\/([\d]+)/gi, function(msg) {
         var urls = msg.message.text.match(/https\:\/\/(?:www\.)?github\.com\/(([A-Za-z0-9\-])+)\/(([A-Za-z\-])+)\/pull\/([\d]+)/gi);
         _.each(urls, function(url) {
@@ -93,6 +151,8 @@ module.exports = function(robot) {
                 var pr = data[0];
                 var issue = data[1];
                 robot.emit('slack.attachment', formatPr(pr, issue, msg));
+            }).catch(function(error) {
+                msg.send('There was an error fetching the pull request.');
             });
         });
     });
