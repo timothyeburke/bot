@@ -29,7 +29,7 @@ function formatPr(pr, issue, msg) {
         attachment.content.fields = [{
             title: 'Labels',
             value: issue.labels.map(function(label) {
-                return '[' + label.name + ']';
+                return '`[' + label.name + ']`';
             }).join('\n'),
             short: true
         }]
