@@ -5,7 +5,7 @@
 //   hubot feed me - find nearby food trucks
 
 module.exports = function(robot) {
-    robot.respond(/feed me/i, function(msg) {
+    robot.respond(/feed (me|us)/i, function(msg) {
         var url = 'http://foodtruckfiesta.com/apps/map_json.php?num_days=365&minimal=0&alert_nc=y&alert_hc=0&alert_pm=0&rand=' + (Math.random() * 1000000);
         msg.http(url).header('Accept', 'application/json').get()(function(err, res, body) {
             if (err) {
