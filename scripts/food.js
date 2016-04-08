@@ -6,29 +6,29 @@
 
 module.exports = function(robot) {
     robot.respond(/feed (me|us)/i, function(msg) {
-        var url = 'http://foodtruckfiesta.com/apps/map_json.php?num_days=365&minimal=0&alert_nc=y&alert_hc=0&alert_pm=0&rand=' + (Math.random() * 1000000);
+        var url = 'http://foodtruckfiesta.com/apps/map_json.php?num_days=365&minimal=0&alert_nc=y&alert_hc=0&alert_pm=0&rand=' + (Math.random() * 1000000)
         msg.http(url).header('Accept', 'application/json').get()(function(err, res, body) {
             if (err) {
-                return;
+                return
             }
 
             try {
-                var markers = JSON.parse(body).markers;
-                var franklin = {};
-                var metroCenter = {};
+                var markers = JSON.parse(body).markers
+                var franklin = {}
+                var metroCenter = {}
 
                 markers.forEach(function(marker) {
-                    var text = marker.alerttext.toLowerCase().replace(/ /g, '');
+                    var text = marker.alerttext.toLowerCase().replace(/ /g, '')
                     if (text.indexOf('tastykabob') !== -1) {
-                        marker.print_name = marker.print_name.trim() + ' :party-parrot:';
+                        marker.print_name = marker.print_name.trim() + ' :party-parrot:'
                     }
                     if (text.indexOf('franklin') !== -1) {
-                        franklin[marker.print_name.trim()] = marker;
+                        franklin[marker.print_name.trim()] = marker
                     }
                     if (text.indexOf('metrocenter') !== -1) {
-                        metroCenter[marker.print_name.trim()] = marker;
+                        metroCenter[marker.print_name.trim()] = marker
                     }
-                });
+                })
 
                 var attachment = {
                     channel: msg.envelope.room,
@@ -48,10 +48,10 @@ module.exports = function(robot) {
                         }]
                     }
                 }
-                robot.emit('slack.attachment', attachment);
+                robot.emit('slack.attachment', attachment)
             } catch(e) {
-                msg.send('Something went wrong.');
+                msg.send('Something went wrong.')
             }
-        });
-    });
-};
+        })
+    })
+}
