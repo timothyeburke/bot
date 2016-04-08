@@ -9,7 +9,7 @@
 var _ = require('lodash');
 var Q = require('q');
 
-function formatPr(pr, issue, msg) {
+function formatPr(pr, issue, status, msg) {
     var attachment = {
         channel: msg.envelope.room,
         content: {
@@ -44,8 +44,22 @@ function formatPr(pr, issue, msg) {
             attachment.content.color = '#BE2A00';
         }
     } else {
-        attachment.content.color = '#6AC631';
+        if (!pr.mergeable) {
+            state = 'Needs Rebase'
+            attachment.content.color = '#888888';
+        } else {
+            if (status[0].state === 'pending') {
+                state = 'Building'
+                attachment.content.color = '#CEA600';
+            } else if (status[0].state === 'failure' || status[0].state === 'error') {
+                state = 'CI ' + _.capitalize(status[0].state)
+                attachment.content.color = '#EE5B59';
+            } else {
+                attachment.content.color = '#6AC631';
+            }
+        }
     }
+
     attachment.content.text = '`[' + _.capitalize(state) + ']` ' + attachment.content.text;
 
     return attachment;
@@ -150,7 +164,17 @@ module.exports = function(robot) {
             ]).then(function(data) {
                 var pr = data[0];
                 var issue = data[1];
-                robot.emit('slack.attachment', formatPr(pr, issue, msg));
+                var statusUrl = pr.statuses_url;
+                return Q.all([
+                    pr,
+                    issue,
+                    getUrl(statusUrl, msg)
+                ]);
+            }).then(function(data) {
+                var pr = data[0];
+                var issue = data[1];
+                var status = data[2];
+                robot.emit('slack.attachment', formatPr(pr, issue, status, msg));
             }).catch(function(error) {
                 msg.send('There was an error fetching the pull request.');
             });
