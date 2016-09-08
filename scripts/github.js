@@ -48,10 +48,10 @@ function formatPr(pr, issue, status, msg) {
             state = 'Needs Rebase'
             attachment.content.color = '#888888'
         } else {
-            if (status[0].state === 'pending') {
+            if (status.length > 0 && status[0].state === 'pending') {
                 state = 'Building'
                 attachment.content.color = '#CEA600'
-            } else if (status[0].state === 'failure' || status[0].state === 'error') {
+            } else if (status.length > 0 && (status[0].state === 'failure' || status[0].state === 'error')) {
                 state = 'CI ' + _.capitalize(status[0].state)
                 attachment.content.color = '#EE5B59'
             } else {
@@ -157,6 +157,9 @@ module.exports = function(robot) {
 
             var pullRequestUrl = baseUrl + project + '/pulls/' + pull
             var issueUrl = baseUrl + project + '/issues/' + pull
+
+            console.log(pullRequestUrl)
+            console.log(issueUrl)
 
             Q.all([
                 getUrl(pullRequestUrl, msg),
