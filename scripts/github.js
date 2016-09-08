@@ -158,9 +158,6 @@ module.exports = function(robot) {
             var pullRequestUrl = baseUrl + project + '/pulls/' + pull
             var issueUrl = baseUrl + project + '/issues/' + pull
 
-            console.log(pullRequestUrl)
-            console.log(issueUrl)
-
             Q.all([
                 getUrl(pullRequestUrl, msg),
                 getUrl(issueUrl, msg)
