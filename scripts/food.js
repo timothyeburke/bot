@@ -31,24 +31,24 @@ module.exports = function(robot) {
                 })
 
                 var attachment = {
-                    channel: msg.envelope.room,
-                    content: {
-                        title: 'Nearby Food Trucks',
-                        title_link: 'http://foodtruckfiesta.com',
-                        color: '#007700',
-                        fallback: 'Nearby Food Trucks',
-                        fields: [{
-                            title: 'Franklin Square',
-                            value: (Object.keys(franklin).length ? Object.keys(franklin).join('\n') : 'No trucks today.'),
-                            short: true
-                        }, {
-                            title: 'Metro Center',
-                            value: (Object.keys(metroCenter).length ? Object.keys(metroCenter).join('\n') : 'No trucks today.'),
-                            short: true
-                        }]
-                    }
+                    title: 'Nearby Food Trucks',
+                    title_link: 'http://foodtruckfiesta.com',
+                    color: '#007700',
+                    fallback: 'Nearby Food Trucks',
+                    fields: [{
+                        title: 'Franklin Square',
+                        value: (Object.keys(franklin).length ? Object.keys(franklin).join('\n') : 'No trucks today.'),
+                        short: true
+                    }, {
+                        title: 'Metro Center',
+                        value: (Object.keys(metroCenter).length ? Object.keys(metroCenter).join('\n') : 'No trucks today.'),
+                        short: true
+                    }]
                 }
-                robot.emit('slack.attachment', attachment)
+
+                msg.send({
+                    attachments: [attachment]
+                })
             } catch(e) {
                 msg.send('Something went wrong.')
             }

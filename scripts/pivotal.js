@@ -25,41 +25,38 @@ module.exports = function(robot) {
 
     function formatAttachment(data) {
         var attachment = {
-            channel: data.room,
-            content: {
-                fallback: 'text',
-                author_name: data.requester,
-                title: data.ticketName,
-                title_link: data.url,
-                mrkdwn_in: ['text', 'fields'],
-                text: data.description.replace(/\*\*/g, '*'),
-                fields: [
-                    {
-                        title: "State",
-                        value: _.capitalize(data.state),
-                        short: true
-                    },
-                    {
-                        title: 'Owners',
-                        value: _.isEmpty(data.owners) ? 'No owners :look_of_disapproval:' : data.owners.join(', '),
-                        short: true
-                    }
-                ]
-            }
+            fallback: 'text',
+            author_name: data.requester,
+            title: data.ticketName,
+            title_link: data.url,
+            mrkdwn_in: ['text', 'fields'],
+            text: data.description.replace(/\*\*/g, '*'),
+            fields: [
+                {
+                    title: "State",
+                    value: _.capitalize(data.state),
+                    short: true
+                },
+                {
+                    title: 'Owners',
+                    value: _.isEmpty(data.owners) ? 'No owners :look_of_disapproval:' : data.owners.join(', '),
+                    short: true
+                }
+            ]
         }
 
         if (data.state === 'delivered') {
-            attachment.content.color = '#f39300'
+            attachment.color = '#f39300'
         } else if (data.state === 'finished') {
-            attachment.content.color = '#203e64'
+            attachment.color = '#203e64'
         } else if (data.state === 'unstarted') {
-            attachment.content.color = '#e0e2e5'
+            attachment.color = '#e0e2e5'
         } else if (data.state === 'accepted') {
-            attachment.content.color = '#629200'
+            attachment.color = '#629200'
         } else if (data.state === 'rejected') {
-            attachment.content.color = '#A71f39'
+            attachment.color = '#A71f39'
         } else {
-            attachment.content.color = '#E0E2E5'
+            attachment.color = '#E0E2E5'
         }
 
         return attachment
@@ -132,7 +129,9 @@ module.exports = function(robot) {
                 var data = formatData(ticketName, description, owners, requester, labels, state, url, room)
                 var attachment = formatAttachment(data)
 
-                robot.emit('slack.attachment', attachment)
+                msg.send({
+                    attachments: [attachment]
+                })
             }).catch(function(data) {
                 msg.send('Something went wrong.')
             })

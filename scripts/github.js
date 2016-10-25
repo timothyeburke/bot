@@ -9,24 +9,21 @@
 var _ = require('lodash')
 var Q = require('q')
 
-function formatPr(pr, issue, status, msg) {
+function formatPr(pr, issue, status) {
     var attachment = {
-        channel: msg.envelope.room,
-        content: {
-            title: pr.title + ' #' + pr.number,
-            title_link: pr.html_url,
-            text: '*' + pr.user.login + '* wants to merge ' + pr.commits + ' commit' + (pr.commits !== 1 ? 's' : '') + ' into \`' + pr.base.ref + '\` from \`' + pr.head.ref + '\`',
-            color: '#000000',
-            fallback: pr.title + '#' + pr.number,
-            author_name: pr.user.login,
-            author_link: pr.user.html_url,
-            author_icon: pr.user.avatar_url,
-            mrkdwn_in: ['text', 'fields']
-        }
+        title: pr.title + ' #' + pr.number,
+        title_link: pr.html_url,
+        text: '*' + pr.user.login + '* wants to merge ' + pr.commits + ' commit' + (pr.commits !== 1 ? 's' : '') + ' into \`' + pr.base.ref + '\` from \`' + pr.head.ref + '\`',
+        color: '#000000',
+        fallback: pr.title + '#' + pr.number,
+        author_name: pr.user.login,
+        author_link: pr.user.html_url,
+        author_icon: pr.user.avatar_url,
+        mrkdwn_in: ['text', 'fields']
     }
 
     if (issue.labels.length) {
-        attachment.content.fields = [{
+        attachment.fields = [{
             title: 'Labels',
             value: issue.labels.map(function(label) {
                 return '`[' + label.name + ']`'
@@ -38,51 +35,48 @@ function formatPr(pr, issue, status, msg) {
     var state = pr.state
     if (pr.state === 'closed') {
         if (pr.merged) {
-            attachment.content.color = '#6E5497'
+            attachment.color = '#6E5497'
             state = 'merged'
         } else {
-            attachment.content.color = '#BE2A00'
+            attachment.color = '#BE2A00'
         }
     } else {
         if (!pr.mergeable) {
             state = 'Needs Rebase'
-            attachment.content.color = '#888888'
+            attachment.color = '#888888'
         } else {
             if (status.length > 0 && status[0].state === 'pending') {
                 state = 'Building'
-                attachment.content.color = '#CEA600'
+                attachment.color = '#CEA600'
             } else if (status.length > 0 && (status[0].state === 'failure' || status[0].state === 'error')) {
                 state = 'CI ' + _.capitalize(status[0].state)
-                attachment.content.color = '#EE5B59'
+                attachment.color = '#EE5B59'
             } else {
-                attachment.content.color = '#6AC631'
+                attachment.color = '#6AC631'
             }
         }
     }
 
-    attachment.content.text = '`[' + _.capitalize(state) + ']` ' + attachment.content.text
+    attachment.text = '`[' + _.capitalize(state) + ']` ' + attachment.text
 
     return attachment
 }
 
 function formatIssue(issue, msg) {
     var attachment = {
-        channel: msg.envelope.room,
-        content: {
-            title: issue.title + ' #' + issue.number,
-            title_link: issue.html_url,
-            text: issue.body,
-            color: '#000000',
-            fallback: issue.title + '#' + issue.number,
-            author_name: issue.user.login,
-            author_link: issue.user.html_url,
-            author_icon: issue.user.avatar_url,
-            mrkdwn_in: ['text', 'fields']
-        }
+        title: issue.title + ' #' + issue.number,
+        title_link: issue.html_url,
+        text: issue.body,
+        color: '#000000',
+        fallback: issue.title + '#' + issue.number,
+        author_name: issue.user.login,
+        author_link: issue.user.html_url,
+        author_icon: issue.user.avatar_url,
+        mrkdwn_in: ['text', 'fields']
     }
 
     if (issue.labels.length) {
-        attachment.content.fields = [{
+        attachment.fields = [{
             title: 'Labels',
             value: issue.labels.map(function(label) {
                 return '`[' + label.name + ']`'
@@ -93,11 +87,11 @@ function formatIssue(issue, msg) {
 
     var state = issue.state
     if (issue.state === 'closed') {
-        attachment.content.color = '#BE2A00'
+        attachment.color = '#BE2A00'
     } else {
-        attachment.content.color = '#6AC631'
+        attachment.color = '#6AC631'
     }
-    attachment.content.text = '`[' + _.capitalize(state) + ']` ' + attachment.content.text
+    attachment.text = '`[' + _.capitalize(state) + ']` ' + attachment.text
 
     return attachment
 }
@@ -174,7 +168,10 @@ module.exports = function(robot) {
                 var pr = data[0]
                 var issue = data[1]
                 var status = data[2]
-                robot.emit('slack.attachment', formatPr(pr, issue, status, msg))
+
+                msg.send({
+                    attachments: [formatPr(pr, issue, status)]
+                })
             }).catch(function(error) {
                 msg.send('There was an error fetching the pull request.')
             })
